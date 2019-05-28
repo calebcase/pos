@@ -30,7 +30,7 @@ type PRNG interface {
 
 	// Create a new PRNG of the same type. If seed is not nil, then the new
 	// PRNG will use it as the new seed. Otherwise the seed will be
-	// initialized the current PRNGs value.
+	// initialized to the current PRNGs value.
 	New(seed []byte) (prng PRNG, err error)
 }
 
@@ -84,8 +84,7 @@ func (prng *AESPRNG) New(seed []byte) (clone PRNG, err error) {
 type Puzzle struct {
 	Type string
 
-	Claim  int64
-	Rounds int64
+	Claim int64
 
 	Seed []byte
 
@@ -103,8 +102,7 @@ func NewPuzzle(claim int64) (*Puzzle, error) {
 	return &Puzzle{
 		Type: "aes-cbc-256",
 
-		Claim:  claim,
-		Rounds: 3,
+		Claim: claim,
 
 		Seed: seed,
 
@@ -197,12 +195,10 @@ func (s *StreamSolver) Prepare(puzzle *Puzzle) (err error) {
 
 	last := make([]byte, lastSize)
 
-	for r := int64(0); r < s.puzzle.Rounds; r++ {
-		for i := int64(0); i < s.puzzle.Claim; i += int64(lastSize) {
-			_, err := io.ReadFull(s.prng, last)
-			if err != nil {
-				return err
-			}
+	for i := int64(0); i < s.puzzle.Claim; i += int64(lastSize) {
+		_, err := io.ReadFull(s.prng, last)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -251,19 +247,15 @@ func (s *StreamSolver) Solve(mask []byte) (solution []byte, err error) {
 
 	mapper := make(map[int64]byte)
 
-	for r := int64(0); r < s.puzzle.Rounds; r++ {
-		for i := int64(0); i < s.puzzle.Claim; i += int64(lastSize) {
-			_, err := io.ReadFull(s.prng, last)
-			if err != nil {
-				return nil, err
-			}
+	for i := int64(0); i < s.puzzle.Claim; i += int64(lastSize) {
+		_, err := io.ReadFull(s.prng, last)
+		if err != nil {
+			return nil, err
+		}
 
-			if r == s.puzzle.Rounds-1 {
-				for _, idx := range indices {
-					if idx >= i && idx < i+int64(lastSize) {
-						mapper[idx] = last[idx-i]
-					}
-				}
+		for _, idx := range indices {
+			if idx >= i && idx < i+int64(lastSize) {
+				mapper[idx] = last[idx-i]
 			}
 		}
 	}
@@ -322,19 +314,15 @@ func (s *DiskSolver) Prepare(puzzle *Puzzle) (err error) {
 
 	last := make([]byte, lastSize)
 
-	for r := int64(0); r < s.puzzle.Rounds; r++ {
-		for i := int64(0); i < s.puzzle.Claim; i += int64(lastSize) {
-			_, err := io.ReadFull(s.prng, last)
-			if err != nil {
-				return err
-			}
+	for i := int64(0); i < s.puzzle.Claim; i += int64(lastSize) {
+		_, err := io.ReadFull(s.prng, last)
+		if err != nil {
+			return err
+		}
 
-			if r == s.puzzle.Rounds-1 {
-				_, err = s.out.Write(last)
-				if err != nil {
-					panic(err)
-				}
-			}
+		_, err = s.out.Write(last)
+		if err != nil {
+			panic(err)
 		}
 	}
 
