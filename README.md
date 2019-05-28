@@ -18,7 +18,7 @@ following properties:
 - C: Start a timer *t*.
 - C: Select a random mask *m* of *n* bytes and send to P.
 - C: Select a desired number of hash inputs *i* and send to P.
-- P: Select the last *n* bytes of output file *o* and [XOR][xor] with mask *m*
+- P: Select *n* bytes of output file *o* and [XOR][xor] with mask *m*
   to produce a new seed *s2*.
 - P: Use seed *s2* to initialize a PRNG. Generate *i* blocks of *n* bytes.
   Modulo each block by *b* bytes to procude a list of indices *x*.
@@ -28,9 +28,8 @@ following properties:
   the proof.
 - C: Following a similar proceedure as P, compute the hash *h*. This can be
   done without the required space by computing the output stream *o* twice. On
-  the first pass only the last *n* bytes are retained to be used to compute
-  *s2*. On the second pass retain the values of the indices needed for the hash
-  *h*.
+  the first pass only the *n* bytes are retained to be used to compute *s2*. On
+  the second pass retain the values of the indices needed for the hash *h*.
 
 The allowed time *At* must be low enough that P cannot perform the two-pass
 method within the interval timed by *t*.
