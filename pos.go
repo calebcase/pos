@@ -16,6 +16,9 @@ type PRNG interface {
 
 	// Create a new PRNG of the same type initialized with the original seed.
 	Clone() (prng PRNG, err error)
+
+	// Get the seed used to initialize this PRNG.
+	GetSeed() []byte
 }
 
 // NewRandomBytes returns random bytes of the given size.
@@ -33,10 +36,11 @@ func NewRandomBytes(size int) ([]byte, error) {
 // Puzzle contains the parameters for preparing and solving a proof of space
 // puzzle.
 type Puzzle struct {
-	Claim        int64 // The amount of space in bytes for this puzzle.
-	PRNG         PRNG  // The PRNG to use for generating data for the puzzle.
-	IndexSize    int64 // The size in bytes of the solution indices.
-	SolutionSize int64 // The size in bytes of the solution.
+	Claim         int64 `json:"claim"`          // The amount of space in bytes for this puzzle.
+	PRNG          PRNG  `json:"prng"`           // The PRNG to use for generating data for the puzzle.
+	PreseedRounds int64 `json:"preseed_rounds"` // The number of rounds to compute during the preseed phase.
+	IndexSize     int64 `json:"index_size"`     // The size in bytes of the solution indices.
+	SolutionSize  int64 `json:"solution_size"`  // The size in bytes of the solution.
 }
 
 func (p *Puzzle) selectIndices(n int64, seed []byte) (indices []int64, err error) {
@@ -98,5 +102,5 @@ func (p *Puzzle) SolutionIndices(preseed, mask []byte) (indices []int64, err err
 // given puzzle.
 type Solver interface {
 	Prepare(puzzle *Puzzle) error
-	Solve(preseedIndices []int64, mask []byte) (solution []byte, err error)
+	Solve(puzzle *Puzzle, preseedIndices []int64, mask []byte) (solution []byte, err error)
 }

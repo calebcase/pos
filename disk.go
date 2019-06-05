@@ -3,8 +3,7 @@ package pos
 import "io"
 
 type DiskSolver struct {
-	out    io.ReadWriteSeeker
-	puzzle *Puzzle
+	out io.ReadWriteSeeker
 }
 
 var _ Solver = (*DiskSolver)(nil)
@@ -16,9 +15,7 @@ func NewDiskSolver(out io.ReadWriteSeeker) (*DiskSolver, error) {
 }
 
 func (s *DiskSolver) Prepare(puzzle *Puzzle) (err error) {
-	s.puzzle = puzzle
-
-	prng, err := s.puzzle.PRNG.Clone()
+	prng, err := puzzle.PRNG.Clone()
 	if err != nil {
 		return err
 	}
@@ -26,7 +23,7 @@ func (s *DiskSolver) Prepare(puzzle *Puzzle) (err error) {
 	const lastSize = 1024
 	last := make([]byte, lastSize, lastSize)
 
-	for i := int64(0); i < s.puzzle.Claim; i += lastSize {
+	for i := int64(0); i < puzzle.Claim; i += lastSize {
 		_, err := io.ReadFull(prng, last)
 		if err != nil {
 			return err
@@ -63,15 +60,30 @@ func (s *DiskSolver) fromIndices(indices []int64) (value []byte, err error) {
 	return value, nil
 }
 
-func (s *DiskSolver) Solve(preseedIndices []int64, mask []byte) (solution []byte, err error) {
+func (s *DiskSolver) Solve(puzzle *Puzzle, preseedIndices []int64, mask []byte) (solution []byte, err error) {
+	var preseed []byte
+
 	// First Pass: Read all preseed indices and construct the preseed.
-	preseed, err := s.fromIndices(preseedIndices)
+	for i := int64(0); i < puzzle.PreseedRounds; i++ {
+		preseed, err = s.fromIndices(preseedIndices)
+		if err != nil {
+			return nil, err
+		}
+
+		preseedIndices, err = puzzle.PreseedIndices(int64(len(preseedIndices)), preseed)
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
+	preseed, err = s.fromIndices(preseedIndices)
 	if err != nil {
 		return nil, err
 	}
 
 	// Second Pass: Read all the solution indices and construct the solution.
-	solutionIndices, err := s.puzzle.SolutionIndices(preseed, mask)
+	solutionIndices, err := puzzle.SolutionIndices(preseed, mask)
 	if err != nil {
 		return nil, err
 	}

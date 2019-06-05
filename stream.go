@@ -2,9 +2,7 @@ package pos
 
 import "io"
 
-type StreamSolver struct {
-	puzzle *Puzzle
-}
+type StreamSolver struct{}
 
 var _ Solver = (*StreamSolver)(nil)
 
@@ -13,13 +11,11 @@ func NewStreamSolver() (*StreamSolver, error) {
 }
 
 func (s *StreamSolver) Prepare(puzzle *Puzzle) (err error) {
-	s.puzzle = puzzle
-
 	return nil
 }
 
-func (s *StreamSolver) fromIndices(indices []int64) (value []byte, err error) {
-	prng, err := s.puzzle.PRNG.Clone()
+func (s *StreamSolver) fromIndices(puzzle *Puzzle, indices []int64) (value []byte, err error) {
+	prng, err := puzzle.PRNG.Clone()
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +25,7 @@ func (s *StreamSolver) fromIndices(indices []int64) (value []byte, err error) {
 	const lastSize = 1024
 	last := make([]byte, lastSize, lastSize)
 
-	for i := int64(0); i < s.puzzle.Claim; i += lastSize {
+	for i := int64(0); i < puzzle.Claim; i += lastSize {
 		_, err := io.ReadFull(prng, last)
 		if err != nil {
 			return nil, err
@@ -51,20 +47,34 @@ func (s *StreamSolver) fromIndices(indices []int64) (value []byte, err error) {
 	return value, nil
 }
 
-func (s *StreamSolver) Solve(preseedIndices []int64, mask []byte) (solution []byte, err error) {
+func (s *StreamSolver) Solve(puzzle *Puzzle, preseedIndices []int64, mask []byte) (solution []byte, err error) {
+	var preseed []byte
+
 	// First Pass: Read all preseed indices and construct the preseed.
-	preseed, err := s.fromIndices(preseedIndices)
+	for i := int64(0); i < puzzle.PreseedRounds; i++ {
+		preseed, err = s.fromIndices(puzzle, preseedIndices)
+		if err != nil {
+			return nil, err
+		}
+
+		preseedIndices, err = puzzle.PreseedIndices(int64(len(preseedIndices)), preseed)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	preseed, err = s.fromIndices(puzzle, preseedIndices)
 	if err != nil {
 		return nil, err
 	}
 
 	// Second Pass: Read all the solution indices and construct the solution.
-	solutionIndices, err := s.puzzle.SolutionIndices(preseed, mask)
+	solutionIndices, err := puzzle.SolutionIndices(preseed, mask)
 	if err != nil {
 		return nil, err
 	}
 
-	solution, err = s.fromIndices(solutionIndices)
+	solution, err = s.fromIndices(puzzle, solutionIndices)
 	if err != nil {
 		return nil, err
 	}

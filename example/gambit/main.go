@@ -1,3 +1,6 @@
+// This example runs the gambit of features provided by the pos library. It
+// will create a stream and disk solver and go through all phases for a proof
+// of space.
 package main
 
 import (
@@ -12,9 +15,11 @@ import (
 func main() {
 	var start time.Time
 
+	// Prepare a claim of 1 GiB.
 	claim := int64(1024 * 1024 * 1024 * 1)
 	fmt.Printf("Claim: %d\n", claim)
 
+	// Generate a random key and iv for the AES PRNG.
 	key, err := pos.NewRandomBytes(32)
 	if err != nil {
 		panic(err)
@@ -25,6 +30,22 @@ func main() {
 		panic(err)
 	}
 
+	prng, err := aesprng.New(key, iv)
+	if err != nil {
+		panic(err)
+	}
+
+	// Initialize the puzzle with some reasonable defaults.
+	puzzle := &pos.Puzzle{
+		Claim:         claim,
+		PRNG:          prng,
+		PreseedRounds: 10,
+		IndexSize:     64,
+		SolutionSize:  16,
+	}
+
+	// Create the stream and disk solvers. We will compare their results
+	// and runtime.
 	streamSolver, err := pos.NewStreamSolver()
 	if err != nil {
 		panic(err)
@@ -41,18 +62,7 @@ func main() {
 		panic(err)
 	}
 
-	prng, err := aesprng.New(key, iv)
-	if err != nil {
-		panic(err)
-	}
-
-	puzzle := &pos.Puzzle{
-		Claim:        claim,
-		PRNG:         prng,
-		IndexSize:    64,
-		SolutionSize: 16,
-	}
-
+	// Time the stream and disk solver's prepare phase.
 	start = time.Now()
 
 	err = streamSolver.Prepare(puzzle)
@@ -73,6 +83,7 @@ func main() {
 
 	file.Sync()
 
+	// Select preseed indices and a mask for the solution phase.
 	preseedIdxSeed, err := pos.NewRandomBytes(len(key) + len(iv))
 	if err != nil {
 		panic(err)
@@ -88,21 +99,28 @@ func main() {
 		panic(err)
 	}
 
+	// Time the stream and disk solver's solve phase.
 	start = time.Now()
 
-	streamSolution, err := streamSolver.Solve(preseedIndices, mask)
+	streamSolution, err := streamSolver.Solve(puzzle, preseedIndices, mask)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("Stream Solution (%s):\n%x\n", time.Since(start), streamSolution)
+	streamSolutionTime := time.Since(start)
+
+	fmt.Printf("Stream Solution (%s):\n%x\n", streamSolutionTime, streamSolution)
 
 	start = time.Now()
 
-	diskSolution, err := diskSolver.Solve(preseedIndices, mask)
+	diskSolution, err := diskSolver.Solve(puzzle, preseedIndices, mask)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Printf("Disk Solution (%s):\n%x\n", time.Since(start), diskSolution)
+	diskSolutionTime := time.Since(start)
+
+	fmt.Printf("Disk Solution (%s):\n%x\n", diskSolutionTime, diskSolution)
+
+	fmt.Printf("Solution Ratio: %f\n", float64(streamSolutionTime)/float64(diskSolutionTime))
 }
