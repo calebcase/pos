@@ -3,6 +3,7 @@ package pos
 import (
 	"crypto/rand"
 	"io"
+	"math"
 	"math/big"
 )
 
@@ -71,6 +72,8 @@ func (p *Puzzle) selectIndices(n int64, seed []byte) (indices []int64, err error
 	return indices, nil
 }
 
+// PreseedIndices computes the offsets of the preseed bytes. Read the byte at
+// each offset to create a preseed.
 func (p *Puzzle) PreseedIndices(n int64, seed []byte) (indices []int64, err error) {
 	indices, err = p.selectIndices(n-1, seed)
 	if err != nil {
@@ -82,8 +85,8 @@ func (p *Puzzle) PreseedIndices(n int64, seed []byte) (indices []int64, err erro
 	return indices, nil
 }
 
-// Indices computes the offsets of the solution bytes. Read the byte at each
-// offset to create a solution.
+// SolutionIndices computes the offsets of the solution bytes. Read the byte at
+// each offset to create a solution.
 func (p *Puzzle) SolutionIndices(preseed, mask []byte) (indices []int64, err error) {
 	seed := make([]byte, len(mask), len(mask))
 	for i, _ := range preseed {
@@ -96,6 +99,37 @@ func (p *Puzzle) SolutionIndices(preseed, mask []byte) (indices []int64, err err
 	}
 
 	return indices, nil
+}
+
+// EstimatePreseedRounds estimates the number of preseed rounds needed for the
+// given claim assuming a given hashing rate in bytes per second and the
+// desired minimum timescale in seconds.
+//
+// PRNG rate should be set to the fastest rate you believe can be acheived for
+// your threat profile. For example, if your threat profile includes hardware
+// accelerated PRNGs, and you have reviewed the hardware currently available to
+// find the current state of the art is approximately 1 GiB / second, then a
+// rate of 10x that may give you sufficient head room.
+//
+// The minimum timescale is meant to tune the preseed rounds such that it takes
+// at least scale seconds long to generate one claim's worth of PRNG bytes.
+//
+// NOTE: The preseed rounds do not increase the differential between stream and
+// disk solving. The preseed rounds are only meant to provide a scaling factor
+// to the overall process to ensure that the differential is detectable. For
+// example, if you are operating this over a network with average latency of 1
+// second with a standard deviation of 0.5 seconds you may wish to set the
+// scale to 2 * 1.5 = 3 seconds in order to ensure it is possible to
+// differentiate between a stream and disk solution (without being washed out
+// by the variance in the network itself).
+func EstimatePreseedRounds(claim int64, rate, scale float64) int64 {
+	unscaled := float64(claim) / rate
+
+	if unscaled > scale {
+		return 0
+	}
+
+	return int64(math.Ceil(scale / unscaled))
 }
 
 // A type implementing the Solver interface can be used to prepare and solve a

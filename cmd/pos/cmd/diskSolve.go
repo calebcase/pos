@@ -11,7 +11,7 @@ import (
 
 var diskSolveCmd = &cobra.Command{
 	Use:   "solve",
-	Short: "Solve a puzzle with a disk solver.",
+	Short: "Solve a puzzle with a disk solver",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 

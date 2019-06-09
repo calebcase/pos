@@ -10,7 +10,7 @@ import (
 
 var diskPrepareCmd = &cobra.Command{
 	Use:   "prepare",
-	Short: "Prepare a disk solver.",
+	Short: "Prepare a disk solver",
 	Run: func(cmd *cobra.Command, args []string) {
 		input := os.Stdin
 		if cmd.Flags().Changed("puzzle") {

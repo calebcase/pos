@@ -4,7 +4,7 @@ import "github.com/spf13/cobra"
 
 var streamCmd = &cobra.Command{
 	Use:   "stream",
-	Short: "stream commands",
+	Short: "Stream commands",
 }
 
 func init() {

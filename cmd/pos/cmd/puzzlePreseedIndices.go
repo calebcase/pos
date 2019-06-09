@@ -10,7 +10,7 @@ import (
 
 var puzzlePreseedIndicesCmd = &cobra.Command{
 	Use:   "preseed-indices",
-	Short: "Compute preseed indices for a puzzle.",
+	Short: "Compute preseed indices for a puzzle",
 	Run: func(cmd *cobra.Command, args []string) {
 		input := os.Stdin
 		if cmd.Flags().Changed("puzzle") {

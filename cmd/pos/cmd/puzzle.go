@@ -8,7 +8,7 @@ import (
 
 var puzzleCmd = &cobra.Command{
 	Use:   "puzzle",
-	Short: "puzzle commands",
+	Short: "Puzzle commands",
 }
 
 type puzzle struct {

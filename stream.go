@@ -2,7 +2,9 @@ package pos
 
 import "io"
 
-type StreamSolver struct{}
+type StreamSolver struct {
+	BytesRead int64
+}
 
 var _ Solver = (*StreamSolver)(nil)
 
@@ -26,14 +28,20 @@ func (s *StreamSolver) fromIndices(puzzle *Puzzle, indices []int64) (value []byt
 	last := make([]byte, lastSize, lastSize)
 
 	for i := int64(0); i < puzzle.Claim; i += lastSize {
-		_, err := io.ReadFull(prng, last)
+		n, err := io.ReadFull(prng, last)
 		if err != nil {
 			return nil, err
 		}
 
+		s.BytesRead += int64(n)
+
 		for _, idx := range indices {
 			if idx >= i && idx < i+lastSize {
 				mapper[idx] = last[idx-i]
+
+				if len(mapper) == len(indices) {
+					break
+				}
 			}
 		}
 	}

@@ -4,7 +4,7 @@ import "github.com/spf13/cobra"
 
 var diskCmd = &cobra.Command{
 	Use:   "disk",
-	Short: "disk solver commands",
+	Short: "Disk solver commands",
 }
 
 func init() {

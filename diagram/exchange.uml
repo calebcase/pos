@@ -1,0 +1,88 @@
+@startuml
+
+skinparam Control {
+	BorderColor Black
+	BackgroundColor White
+}
+
+skinparam Database {
+	BorderColor Black
+	BackgroundColor White
+}
+
+skinparam BoxPadding 20
+
+skinparam Sequence {
+	MessageAlign center
+
+	ArrowColor Black
+
+	LifeLineBorderColor Black
+
+	ParticipantBorderColor Black
+	ParticipantBackgroundColor White
+	ParticipantPadding 20
+
+	BoxBorderColor White
+}
+
+box challenger #d8e7ff
+	control Timer
+	participant Challenger
+end box
+
+box solver #ffebea
+	participant Solver
+	database Disk
+end box
+
+== Prepare ==
+
+Solver -> Challenger : claim
+
+Challenger -> Challenger : Generate puzzle
+
+Challenger -> Solver : puzzle
+
+Solver -> Solver : Initialize PRNG
+
+Solver -> Disk : PRN
+activate Disk
+
+Solver -> Challenger : ready to solve
+
+== Solve ==
+
+Challenger -> Challenger : Generate preseed indices & mask
+
+Challenger -> Timer : start
+activate Timer
+
+Challenger -> Solver : preseed indices & mask
+
+loop n rounds
+	Solver -> Disk : Read preseed indices
+	Solver -> Solver : Compute preseed
+	Solver -> Solver : Initialize PRNG
+	Solver -> Solver : Generate preseed indices
+end
+
+Solver -> Disk : Read preseed indices
+Solver -> Solver : Compute preseed
+Solver -> Solver : Initialize PRNG
+
+Solver -> Solver : Compute solution indices
+
+Solver -> Disk : Read solution indices
+deactivate Disk
+
+Solver -> Solver : Apply mask
+
+Solver -> Challenger : solution
+
+Challenger -> Timer : stop
+deactivate Timer
+
+Challenger -> Challenger : Check solution & duration
+
+@enduml

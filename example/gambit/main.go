@@ -39,7 +39,7 @@ func main() {
 	puzzle := &pos.Puzzle{
 		Claim:         claim,
 		PRNG:          prng,
-		PreseedRounds: 10,
+		PreseedRounds: 20,
 		IndexSize:     64,
 		SolutionSize:  16,
 	}
@@ -108,6 +108,10 @@ func main() {
 	}
 
 	streamSolutionTime := time.Since(start)
+
+	totalHashed := streamSolver.BytesRead
+	rate := float64(totalHashed) / streamSolutionTime.Seconds()
+	fmt.Printf("Hash Rate: %d / %f = %f\n", totalHashed, streamSolutionTime.Seconds(), rate)
 
 	fmt.Printf("Stream Solution (%s):\n%x\n", streamSolutionTime, streamSolution)
 

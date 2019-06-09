@@ -34,6 +34,8 @@ following properties:
 The allowed time *At* must be low enough that P cannot perform the two-pass
 method within the interval timed by *t*.
 
+![Exchange Sequence](diagram/exchange.svg)
+
 ---
 
 [pos]: https://en.wikipedia.org/wiki/Proof-of-space

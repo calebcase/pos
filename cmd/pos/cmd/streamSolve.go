@@ -11,7 +11,7 @@ import (
 
 var streamSolveCmd = &cobra.Command{
 	Use:   "solve",
-	Short: "Solve a puzzle with a stream solver.",
+	Short: "Solve a puzzle with a stream solver",
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 

@@ -11,7 +11,7 @@ import (
 
 var puzzleMaskCmd = &cobra.Command{
 	Use:   "mask",
-	Short: "create a mask for a puzzle",
+	Short: "Create a mask for a puzzle",
 	Run: func(cmd *cobra.Command, args []string) {
 		input := os.Stdin
 		if cmd.Flags().Changed("puzzle") {
